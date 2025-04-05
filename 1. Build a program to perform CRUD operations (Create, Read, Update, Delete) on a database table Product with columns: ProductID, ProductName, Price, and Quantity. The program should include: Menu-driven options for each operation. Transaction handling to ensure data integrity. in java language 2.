@@ -1,0 +1,203 @@
+CODE-1
+
+import java.sql.*;
+import java.util.Scanner;
+
+public class ProductCRUD {
+    // Update these variables based on your DB config
+    static final String DB_URL = "jdbc:mysql://localhost:3306/your_database";
+    static final String USER = "your_username";
+    static final String PASS = "your_password";
+
+    public static void main(String[] args) {
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS)) {
+            conn.setAutoCommit(false);  // Enable transaction handling
+            Scanner sc = new Scanner(System.in);
+            int choice;
+
+            do {
+                System.out.println("\n==== PRODUCT MENU ====");
+                System.out.println("1. Create Product");
+                System.out.println("2. Read All Products");
+                System.out.println("3. Update Product");
+                System.out.println("4. Delete Product");
+                System.out.println("5. Exit");
+                System.out.print("Enter your choice: ");
+                choice = sc.nextInt();
+
+                switch (choice) {
+                    case 1:
+                        createProduct(conn, sc);
+                        break;
+                    case 2:
+                        readProducts(conn);
+                        break;
+                    case 3:
+                        updateProduct(conn, sc);
+                        break;
+                    case 4:
+                        deleteProduct(conn, sc);
+                        break;
+                    case 5:
+                        System.out.println("Exiting...");
+                        break;
+                    default:
+                        System.out.println("Invalid choice!");
+                }
+
+            } while (choice != 5);
+
+            sc.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    static void createProduct(Connection conn, Scanner sc) {
+        try {
+            System.out.print("Enter Product ID: ");
+            int id = sc.nextInt();
+            sc.nextLine();  // Consume newline
+            System.out.print("Enter Product Name: ");
+            String name = sc.nextLine();
+            System.out.print("Enter Price: ");
+            double price = sc.nextDouble();
+            System.out.print("Enter Quantity: ");
+            int quantity = sc.nextInt();
+
+            String sql = "INSERT INTO Product (ProductID, ProductName, Price, Quantity) VALUES (?, ?, ?, ?)";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, id);
+            ps.setString(2, name);
+            ps.setDouble(3, price);
+            ps.setInt(4, quantity);
+
+            ps.executeUpdate();
+            conn.commit();
+            System.out.println(" Product added successfully.");
+
+        } catch (SQLException e) {
+            try {
+                conn.rollback();
+                System.out.println(" Transaction rolled back due to error.");
+            } catch (SQLException rollbackEx) {
+                rollbackEx.printStackTrace();
+            }
+            e.printStackTrace();
+        }
+    }
+
+    static void readProducts(Connection conn) {
+        try {
+            String sql = "SELECT * FROM Product";
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
+
+            System.out.println("\n=== Products List ===");
+            while (rs.next()) {
+                System.out.printf("ID: %d | Name: %s | Price: %.2f | Quantity: %d\n",
+                        rs.getInt("ProductID"),
+                        rs.getString("ProductName"),
+                        rs.getDouble("Price"),
+                        rs.getInt("Quantity"));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    static void updateProduct(Connection conn, Scanner sc) {
+        try {
+            System.out.print("Enter Product ID to update: ");
+            int id = sc.nextInt();
+            sc.nextLine();
+            System.out.print("Enter new Product Name: ");
+            String name = sc.nextLine();
+            System.out.print("Enter new Price: ");
+            double price = sc.nextDouble();
+            System.out.print("Enter new Quantity: ");
+            int quantity = sc.nextInt();
+
+            String sql = "UPDATE Product SET ProductName=?, Price=?, Quantity=? WHERE ProductID=?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, name);
+            ps.setDouble(2, price);
+            ps.setInt(3, quantity);
+            ps.setInt(4, id);
+
+            int rowsUpdated = ps.executeUpdate();
+            if (rowsUpdated > 0) {
+                conn.commit();
+                System.out.println("Product updated successfully.");
+            } else {
+                System.out.println(" Product not found.");
+            }
+
+        } catch (SQLException e) {
+            try {
+                conn.rollback();
+                System.out.println("Transaction rolled back due to error.");
+            } catch (SQLException rollbackEx) {
+                rollbackEx.printStackTrace();
+            }
+            e.printStackTrace();
+        }
+    }
+
+    static void deleteProduct(Connection conn, Scanner sc) {
+        try {
+            System.out.print("Enter Product ID to delete: ");
+            int id = sc.nextInt();
+
+            String sql = "DELETE FROM Product WHERE ProductID=?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, id);
+
+            int rowsDeleted = ps.executeUpdate();
+            if (rowsDeleted > 0) {
+                conn.commit();
+                System.out.println("Product deleted successfully.");
+            } else {
+                System.out.println("Product not found.");
+            }
+
+        } catch (SQLException e) {
+            try {
+                conn.rollback();
+                System.out.println("Transaction rolled back due to error.");
+            } catch (SQLException rollbackEx) {
+                rollbackEx.printStackTrace();
+            }
+            e.printStackTrace();
+        }
+    }
+}
+
+CODE-2
+public class Student {
+    private int studentID;
+    private String name;
+    private String department;
+    private double marks;
+
+    public Student(int studentID, String name, String department, double marks) {
+        this.studentID = studentID;
+        this.name = name;
+        this.department = department;
+        this.marks = marks;
+    }
+
+    // Getters
+    public int getStudentID() { return studentID; }
+    public String getName() { return name; }
+    public String getDepartment() { return department; }
+    public double getMarks() { return marks; }
+
+    // Setters
+    public void setName(String name) { this.name = name; }
+    public void setDepartment(String department) { this.department = department; }
+    public void setMarks(double marks) { this.marks = marks; }
+}
+
